@@ -16,11 +16,11 @@ public class BoidsModel {
     private final double perceptionRadius;
     private final double avoidRadius;
 
-    public BoidsModel(int nboids,
-    						double initialSeparationWeight,
-    						double initialAlignmentWeight,
+    public BoidsModel(int nboids,  
+    						double initialSeparationWeight, 
+    						double initialAlignmentWeight, 
     						double initialCohesionWeight,
-    						double width,
+    						double width, 
     						double height,
     						double maxSpeed,
     						double perceptionRadius,
@@ -33,7 +33,7 @@ public class BoidsModel {
         this.maxSpeed = maxSpeed;
         this.perceptionRadius = perceptionRadius;
         this.avoidRadius = avoidRadius;
-
+        
     	boids = new ArrayList<>();
         for (int i = 0; i < nboids; i++) {
         	P2d pos = new P2d(-width/2 + Math.random() * width, -height/2 + Math.random() * height);
@@ -48,7 +48,6 @@ public class BoidsModel {
     }
 
     public synchronized List<Boid> getBoidsSubset(int from, int to){
-
         return boids.subList(from, to);
     }
     
