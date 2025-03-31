@@ -14,6 +14,7 @@ public class BoidsView implements ChangeListener {
 	private JFrame frame;
 	private BoidsPanel boidsPanel;
 	private JSlider cohesionSlider, separationSlider, alignmentSlider;
+	private JButton startButton, resumeButton, stopButton;
 	private BoidsModel model;
 	private int width, height;
 	
@@ -29,6 +30,21 @@ public class BoidsView implements ChangeListener {
 		JPanel cp = new JPanel();
 		LayoutManager layout = new BorderLayout();
 		cp.setLayout(layout);
+
+		JPanel header = new JPanel();
+		cp.add(BorderLayout.NORTH, header);
+
+		resumeButton = makeButton("Pause");
+		stopButton = makeButton("Stop");
+
+		resumeButton.addActionListener(e ->
+
+
+		);
+
+
+		header.add(resumeButton);
+		header.add(stopButton);
 
         boidsPanel = new BoidsPanel(this, model);
 		cp.add(BorderLayout.CENTER, boidsPanel);
@@ -68,7 +84,14 @@ public class BoidsView implements ChangeListener {
         slider.addChangeListener(this);
 		return slider;
 	}
-	
+
+	private JButton makeButton(String text) {
+		JButton button = new JButton(text);
+		button.setPreferredSize(new Dimension(100, 40)); // Set width to 100 and height to 40
+		//button.addActionListener(this);
+		return button;
+	}
+
 	public void update(int frameRate) {
 		boidsPanel.setFrameRate(frameRate);
 		boidsPanel.repaint();
@@ -86,6 +109,10 @@ public class BoidsView implements ChangeListener {
 			var val = alignmentSlider.getValue();
 			model.setAlignmentWeight(0.1*val);
 		}
+	}
+
+	private void notifyPause(){
+
 	}
 	
 	public int getWidth() {

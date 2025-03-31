@@ -4,6 +4,7 @@ import pcd.version1.BoidWorker;
 import pcd.version1.Utils;
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
+import pcd.version1.monitors.PauseFlag;
 import pcd.version1.view.BoidsView;
 
 import java.util.ArrayList;
@@ -11,12 +12,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public class BoidsSimulator {
 
-    private static final int FRAMERATE = 144;
+    private static final int FRAMERATE = 60;
 
     private BoidsModel model;
     private Optional<BoidsView> view;
@@ -27,7 +27,7 @@ public class BoidsSimulator {
     private List<Thread> workerThreads;
     private final CyclicBarrier velocityBarrier;
     private final CyclicBarrier positionBarrier;
-
+    private final PauseFlag pauseFlag;
 
     public BoidsSimulator(BoidsModel model) {
         this.model = model;
@@ -36,6 +36,8 @@ public class BoidsSimulator {
 
         velocityBarrier = new CyclicBarrier(nWorkers + 1);
         positionBarrier = new CyclicBarrier(nWorkers + 1, model::updateSpatialGrid);
+        pauseFlag = new PauseFlag();
+        pauseFlag.reset();
     }
 
     public void attachView(BoidsView view) {
@@ -50,27 +52,14 @@ public class BoidsSimulator {
         this.boidsWorkers = boidsWorkers;
     }
 
-    public void updateWorkers() {
-
-        int boidsPerThread = BoidsSimulation.N_BOIDS / nWorkers;
-
-        for (int i = 0; i < nWorkers; i++) {
-            int from = i * boidsPerThread;
-            int to = (i == nWorkers - 1) ? BoidsSimulation.N_BOIDS - 1 : (i + 1) * boidsPerThread;
-
-            BoidWorker worker = boidsWorkers.get(i);
-            worker.setBoidsSubset(model.getBoidsSubset(from, to));
-        }
-    }
-
-    private List<Thread> divideWorkLoad(int nWorkers, CyclicBarrier velocityBarrier, CyclicBarrier positionBarrier) {
+    private List<Thread> divideWorkLoad(int nWorkers, CyclicBarrier velocityBarrier, CyclicBarrier positionBarrier, PauseFlag pauseFlag) {
         int boidsPerThread = BoidsSimulation.N_BOIDS / nWorkers;
         final List<Thread> workers = new ArrayList<>();
         final List<BoidWorker> updaters = new ArrayList<>();
 
         for (int i = 0; i < nWorkers; i++) {
             int from = i * boidsPerThread;
-            int to = (i == nWorkers - 1) ? BoidsSimulation.N_BOIDS - 1 : (i + 1) * boidsPerThread;
+            int to = (i == nWorkers - 1) ? BoidsSimulation.N_BOIDS : (i + 1) * boidsPerThread;
             List<Boid> boidSubSet = model.getBoidsSubset(from, to);
 
             int r = new Random().nextInt(0xFFFFFF + 1);
@@ -84,10 +73,10 @@ public class BoidsSimulator {
                     model,
                     boidSubSet,
                     velocityBarrier,
-                    positionBarrier
+                    positionBarrier,
+                    pauseFlag
             );
             Thread worker = new Thread(updater);
-            worker.setDaemon(true);
             worker.start();
             workers.add(worker);
             updaters.add(updater);
@@ -99,7 +88,7 @@ public class BoidsSimulator {
     public void startSimulation() throws BrokenBarrierException, InterruptedException {
         nWorkers = Runtime.getRuntime().availableProcessors() + 1;
         Utils.log("" + nWorkers, Thread.currentThread().getName());
-        setWorkerThreads(divideWorkLoad(nWorkers, velocityBarrier, positionBarrier));
+        setWorkerThreads(divideWorkLoad(nWorkers, velocityBarrier, positionBarrier, pauseFlag));
         runSimulation();
     }
 

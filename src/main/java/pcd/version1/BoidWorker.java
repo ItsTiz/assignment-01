@@ -2,50 +2,48 @@ package pcd.version1;
 
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
+import pcd.version1.monitors.PauseFlag;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public class BoidWorker implements Runnable {
 
     private final String name;
     private final BoidsModel model;
-    private List<Boid> boidsSubset;
+    private final List<Boid> boidsSubset;
     private final CyclicBarrier velocityBarrier;
     private final CyclicBarrier positionBarrier;
+    private final PauseFlag pauseFlag;
 
-    public BoidWorker(String name, BoidsModel model, List<Boid> boidsSubset, CyclicBarrier velocityBarrier, CyclicBarrier positionBarrier) {
+    public BoidWorker(String name, BoidsModel model, List<Boid> boidsSubset, CyclicBarrier velocityBarrier, CyclicBarrier positionBarrier, PauseFlag pauseFlag) {
         this.name = name;
         this.model = model;
         this.boidsSubset = boidsSubset;
         this.velocityBarrier = velocityBarrier;
         this.positionBarrier = positionBarrier;
-    }
-
-    public void setBoidsSubset(List<Boid> boidsSubset) {
-        this.boidsSubset = boidsSubset;
+        this.pauseFlag = pauseFlag;
     }
 
     @Override
     public void run() {
         while (true) {
             try {
-                for (Boid boid : boidsSubset) {
-                    updateVelocity(boid);
+                if (!pauseFlag.isSet()) {
+
+                    for (Boid boid : boidsSubset) {
+                        updateVelocity(boid);
+
+                    }
+
+                    velocityBarrier.await();
+
+                    for (Boid boid : boidsSubset) {
+                        updatePos(boid);
+                    }
+
+                    positionBarrier.await();
                 }
-
-                velocityBarrier.await();
-
-                /*
-                 * ..then update positions
-                 */
-
-                for (Boid boid : boidsSubset) {
-                    updatePos(boid);
-                }
-
-                positionBarrier.await();
 
             } catch (Exception e) {
                 System.err.println("Error in worker " + name + ": " + e.getMessage());
