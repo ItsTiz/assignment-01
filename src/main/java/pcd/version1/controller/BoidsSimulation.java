@@ -6,9 +6,6 @@ import pcd.version1.view.BoidsView;
 import java.util.concurrent.BrokenBarrierException;
 
 public class BoidsSimulation {
-
-    final static int N_BOIDS = 10000;
-
     final static double SEPARATION_WEIGHT = 1.0;
     final static double ALIGNMENT_WEIGHT = 1.0;
     final static double COHESION_WEIGHT = 1.0;
@@ -22,10 +19,9 @@ public class BoidsSimulation {
     final static int SCREEN_WIDTH = 1920;
     final static int SCREEN_HEIGHT = 1080;
 
-
-    public static void main(String[] args) throws InterruptedException, BrokenBarrierException {
+    public static void main(String[] args) {
         var model = new BoidsModel(
-                N_BOIDS,
+                0,
                 SEPARATION_WEIGHT, ALIGNMENT_WEIGHT, COHESION_WEIGHT,
                 ENVIRONMENT_WIDTH, ENVIRONMENT_HEIGHT,
                 MAX_SPEED,
@@ -33,7 +29,7 @@ public class BoidsSimulation {
                 AVOID_RADIUS);
         var sim = new BoidsSimulator(model);
         var view = new BoidsView(model, SCREEN_WIDTH, SCREEN_HEIGHT);
+        view.addListener(sim);
         sim.attachView(view);
-        sim.startSimulation();
     }
 }

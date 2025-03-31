@@ -1,8 +1,11 @@
-package pcd.version1;
+package pcd.version1.controller;
 
+import pcd.version1.P2d;
+import pcd.version1.V2d;
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
 import pcd.version1.monitors.PauseFlag;
+import pcd.version1.monitors.StopFlag;
 
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
@@ -15,35 +18,45 @@ public class BoidWorker implements Runnable {
     private final CyclicBarrier velocityBarrier;
     private final CyclicBarrier positionBarrier;
     private final PauseFlag pauseFlag;
+    private final StopFlag stopFlag;
 
-    public BoidWorker(String name, BoidsModel model, List<Boid> boidsSubset, CyclicBarrier velocityBarrier, CyclicBarrier positionBarrier, PauseFlag pauseFlag) {
+    public BoidWorker(
+            String name,
+            BoidsModel model,
+            List<Boid> boidsSubset,
+            CyclicBarrier velocityBarrier,
+            CyclicBarrier positionBarrier,
+            PauseFlag pauseFlag,
+            StopFlag stopFlag
+    ) {
         this.name = name;
         this.model = model;
         this.boidsSubset = boidsSubset;
         this.velocityBarrier = velocityBarrier;
         this.positionBarrier = positionBarrier;
         this.pauseFlag = pauseFlag;
+        this.stopFlag = stopFlag;
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (!stopFlag.isSet()) {
             try {
-                if (!pauseFlag.isSet()) {
-
-                    for (Boid boid : boidsSubset) {
-                        updateVelocity(boid);
-
+                synchronized (pauseFlag) {
+                    while (pauseFlag.isSet()) {
+                        try {
+                            pauseFlag.wait();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-
-                    velocityBarrier.await();
-
-                    for (Boid boid : boidsSubset) {
-                        updatePos(boid);
-                    }
-
-                    positionBarrier.await();
                 }
+
+                boidsSubset.forEach(this::updateVelocity);
+                velocityBarrier.await();
+
+                boidsSubset.forEach(this::updatePos);
+                positionBarrier.await();
 
             } catch (Exception e) {
                 System.err.println("Error in worker " + name + ": " + e.getMessage());
