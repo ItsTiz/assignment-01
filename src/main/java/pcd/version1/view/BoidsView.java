@@ -1,4 +1,6 @@
-package pcd.ass01;
+package pcd.version1.view;
+
+import pcd.version1.model.BoidsModel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

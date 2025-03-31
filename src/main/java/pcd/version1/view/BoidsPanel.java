@@ -1,4 +1,7 @@
-package pcd.ass01;
+package pcd.version1.view;
+
+import pcd.version1.model.Boid;
+import pcd.version1.model.BoidsModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,13 +35,14 @@ public class BoidsPanel extends JPanel {
 
         var boids = model.getBoids();
 
-        g.setColor(Color.BLUE);
         for (Boid boid : boids) {
-        	var x = boid.getPos().x();
+            String hexColor = boid.getColorHex() != null ? boid.getColorHex() : "#000000";
+            g.setColor(Color.decode(hexColor));
+            var x = boid.getPos().x();
         	var y = boid.getPos().y();
         	int px = (int)(w/2 + x*xScale);
         	int py = (int)(h/2 - y*xScale);
-            g.fillOval(px,py, 5, 5);
+            g.fillOval(px,py, 8, 8);
         }
         
         g.setColor(Color.BLACK);

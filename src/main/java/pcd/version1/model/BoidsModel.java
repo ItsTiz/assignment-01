@@ -1,12 +1,16 @@
-package pcd.ass01;
+package pcd.version1.model;
+
+import pcd.version1.P2d;
+import pcd.version1.V2d;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class BoidsModel {
     
     private final List<Boid> boids;
+    private final SpatialGrid spatialGrid;
     private double separationWeight; 
     private double alignmentWeight; 
     private double cohesionWeight; 
@@ -16,11 +20,11 @@ public class BoidsModel {
     private final double perceptionRadius;
     private final double avoidRadius;
 
-    public BoidsModel(int nboids,  
-    						double initialSeparationWeight, 
-    						double initialAlignmentWeight, 
+    public BoidsModel(int nboids,
+    						double initialSeparationWeight,
+    						double initialAlignmentWeight,
     						double initialCohesionWeight,
-    						double width, 
+    						double width,
     						double height,
     						double maxSpeed,
     						double perceptionRadius,
@@ -33,24 +37,41 @@ public class BoidsModel {
         this.maxSpeed = maxSpeed;
         this.perceptionRadius = perceptionRadius;
         this.avoidRadius = avoidRadius;
-        
-    	boids = new ArrayList<>();
+
+        boids = generateRandomBoids(nboids, width, height, maxSpeed);
+
+        this.spatialGrid = new SpatialGrid(perceptionRadius);
+        spatialGrid.updateGrid(boids);
+    }
+
+    private List<Boid> generateRandomBoids(int nboids, double width, double height, double maxSpeed) {
+        final List<Boid> boids;
+        boids = new ArrayList<>();
         for (int i = 0; i < nboids; i++) {
-        	P2d pos = new P2d(-width/2 + Math.random() * width, -height/2 + Math.random() * height);
-        	V2d vel = new V2d(Math.random() * maxSpeed/2 - maxSpeed/4, Math.random() * maxSpeed/2 - maxSpeed/4);
+        	P2d pos = new P2d(-width /2 + Math.random() * width, -height /2 + Math.random() * height);
+        	V2d vel = new V2d(Math.random() * maxSpeed /2 - maxSpeed /4, Math.random() * maxSpeed /2 - maxSpeed /4);
         	boids.add(new Boid(pos, vel));
         }
-
-    }
-    
-    public synchronized List<Boid> getBoids(){
-    	return boids;
+        return boids;
     }
 
-    public synchronized List<Boid> getBoidsSubset(int from, int to){
+    public List<Boid> getBoids(){
+    	return Collections.unmodifiableList(boids);
+    }
+
+    public List<Boid> getBoidsSubset(int from, int to){
+
         return boids.subList(from, to);
     }
-    
+
+    public List<Boid> getNearbyBoids(Boid boid) {
+        return spatialGrid.getNearbyBoids(boid, getPerceptionRadius());
+    }
+
+    public void updateSpatialGrid() {
+        spatialGrid.updateGrid(getBoids());
+    }
+
     public synchronized double getMinX() {
     	return -width/2;
     }
