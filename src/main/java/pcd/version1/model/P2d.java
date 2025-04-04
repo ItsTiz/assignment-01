@@ -1,4 +1,4 @@
-package pcd.version1;
+package pcd.version1.model;
 
 /**
  *

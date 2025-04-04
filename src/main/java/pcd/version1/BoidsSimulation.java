@@ -1,9 +1,8 @@
-package pcd.version1.controller;
+package pcd.version1;
 
+import pcd.version1.controller.BoidsSimulator;
 import pcd.version1.model.BoidsModel;
 import pcd.version1.view.BoidsView;
-
-import java.util.concurrent.BrokenBarrierException;
 
 public class BoidsSimulation {
     final static double SEPARATION_WEIGHT = 1.0;
@@ -13,7 +12,7 @@ public class BoidsSimulation {
     final static int ENVIRONMENT_WIDTH = 1920;
     final static int ENVIRONMENT_HEIGHT = 1080;
     static final double MAX_SPEED = 4;
-    static final double PERCEPTION_RADIUS = 30.0;
+    static final double PERCEPTION_RADIUS = 25.0;
     static final double AVOID_RADIUS = 20.0;
 
     final static int SCREEN_WIDTH = 1920;

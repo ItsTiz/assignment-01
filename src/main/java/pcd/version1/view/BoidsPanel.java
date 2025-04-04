@@ -2,6 +2,7 @@ package pcd.version1.view;
 
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
+import pcd.version1.utils.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,7 @@ public class BoidsPanel extends JPanel {
         	var y = boid.getPos().y();
         	int px = (int)(w/2 + x*xScale);
         	int py = (int)(h/2 - y*xScale);
-            g.fillOval(px,py, 5, 5);
+            g.fillOval(px,py, 8, 8);
         }
         
         g.setColor(Color.BLACK);

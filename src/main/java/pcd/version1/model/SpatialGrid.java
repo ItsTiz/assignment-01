@@ -1,42 +1,36 @@
 package pcd.version1.model;
 
-import pcd.version1.P2d;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-class SpatialGrid {
-    private final Map<GridCell, List<Boid>> cells = new ConcurrentHashMap<>();
+import java.util.*;
+
+public class SpatialGrid {
+    private final Map<GridCell, List<Boid>> cells = new HashMap<>();
     private final double cellSize;
 
     public SpatialGrid(double cellSize) {
         this.cellSize = cellSize;
     }
 
-    public GridCell getCellForPosition(P2d position) {
+    public synchronized GridCell getCellForPosition(P2d position) {
         int cellX = (int) Math.floor(position.x() / cellSize);
         int cellY = (int) Math.floor(position.y() / cellSize);
         return new GridCell(cellX, cellY);
     }
 
-    public void updateGrid(List<Boid> boids) {
-        Map<GridCell, List<Boid>> newCells = new ConcurrentHashMap<>();
+    public synchronized void updateGrid(List<Boid> boids) {
+        Map<GridCell, List<Boid>> newCells = new HashMap<>();
         for (Boid boid : boids) {
             GridCell cell = getCellForPosition(boid.getPos());
-            newCells.computeIfAbsent(cell, k -> new CopyOnWriteArrayList<>()).add(boid);
+            newCells.computeIfAbsent(cell, k -> new ArrayList<>()).add(boid);
         }
         cells.clear();
         cells.putAll(newCells);
     }
 
-    public List<Boid> getNearbyBoids(Boid boid, double radius) {
+    public synchronized List<Boid> getNearbyBoids(Boid boid, double radius) {
         P2d pos = boid.getPos();
         GridCell cell = getCellForPosition(pos);
         int cellRadius = (int) Math.ceil(radius / cellSize);

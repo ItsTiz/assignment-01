@@ -7,7 +7,7 @@
  * Use is subject to license terms.
  *
  */
-package pcd.version1;
+package pcd.version1.model;
 
 /**
  *

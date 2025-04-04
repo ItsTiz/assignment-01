@@ -1,7 +1,7 @@
 package pcd.version1.controller;
 
-import pcd.version1.P2d;
-import pcd.version1.V2d;
+import pcd.version1.model.P2d;
+import pcd.version1.model.V2d;
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
 import pcd.version1.monitors.PauseFlag;
@@ -42,15 +42,7 @@ public class BoidWorker implements Runnable {
     public void run() {
         while (!stopFlag.isSet()) {
             try {
-                synchronized (pauseFlag) {
-                    while (pauseFlag.isSet()) {
-                        try {
-                            pauseFlag.wait();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
+                pauseFlag.awaitUnpause();
 
                 boidsSubset.forEach(this::updateVelocity);
                 velocityBarrier.await();
@@ -99,10 +91,10 @@ public class BoidWorker implements Runnable {
 
         P2d pos = boid.getPos();
 
-        if (pos.x() < model.getMinX()) pos = pos.sum(new V2d(model.getWidth(), 0));
-        if (pos.x() >= model.getMaxX()) pos = pos.sum(new V2d(-model.getWidth(), 0));
-        if (pos.y() < model.getMinY()) pos = pos.sum(new V2d(0, model.getHeight()));
-        if (pos.y() >= model.getMaxY()) pos = pos.sum(new V2d(0, -model.getHeight()));
+        if (pos.x() < model.getMinX()) boid.setPos(pos.sum(new V2d(model.getWidth(), 0)));
+        if (pos.x() >= model.getMaxX()) boid.setPos(pos.sum(new V2d(-model.getWidth(), 0)));
+        if (pos.y() < model.getMinY()) boid.setPos(pos.sum(new V2d(0, model.getHeight())));
+        if (pos.y() >= model.getMaxY())boid.setPos(pos.sum(new V2d(0, -model.getHeight())));
     }
 
 }

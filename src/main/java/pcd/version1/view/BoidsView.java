@@ -10,8 +10,10 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.concurrent.BrokenBarrierException;
 
 public class BoidsView implements ChangeListener, ActionListener {
     private JFrame frame;
@@ -48,8 +50,10 @@ public class BoidsView implements ChangeListener, ActionListener {
         listeners.add(l);
     }
 
-    private void notifyStarted() {
-        listeners.forEach(InputListener::started);
+    private void notifyStarted() throws BrokenBarrierException, InterruptedException {
+        for (InputListener listener : listeners) {
+            listener.started();
+        }
     }
 
     private void notifyResumed() {
@@ -186,7 +190,11 @@ public class BoidsView implements ChangeListener, ActionListener {
         switch (e.getActionCommand()) {
             case "Start": {
                 notifyBoidsNumberChanged();
-                notifyStarted();
+                try {
+                    notifyStarted();
+                } catch (BrokenBarrierException | InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
                 resumeButton.setEnabled(true);
                 stopButton.setEnabled(true);
                 startButton.setEnabled(false);

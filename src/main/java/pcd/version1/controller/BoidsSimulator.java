@@ -1,10 +1,10 @@
 package pcd.version1.controller;
 
-import pcd.version1.Utils;
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
 import pcd.version1.monitors.PauseFlag;
 import pcd.version1.monitors.StopFlag;
+import pcd.version1.utils.Utils;
 import pcd.version1.view.BoidsView;
 
 import java.util.ArrayList;
@@ -17,12 +17,12 @@ import java.util.concurrent.CyclicBarrier;
 public class BoidsSimulator implements InputListener {
 
     private static final int FRAMERATE = 60;
+    private final static int nWorkers = Runtime.getRuntime().availableProcessors();
 
     private final BoidsModel model;
     private Optional<BoidsView> view;
     private int framerate;
 
-    private int nWorkers;
     private List<Thread> workerThreads;
     private final CyclicBarrier velocityBarrier;
     private final CyclicBarrier positionBarrier;
@@ -34,7 +34,6 @@ public class BoidsSimulator implements InputListener {
         this.view = Optional.empty();
         this.workerThreads = new ArrayList<>();
 
-        nWorkers = Runtime.getRuntime().availableProcessors() + 1;
         this.velocityBarrier = new CyclicBarrier(nWorkers + 1);
         this.positionBarrier = new CyclicBarrier(nWorkers + 1, model::updateSpatialGrid);
         this.pauseFlag = new PauseFlag();
@@ -60,6 +59,7 @@ public class BoidsSimulator implements InputListener {
             List<Boid> boidSubset = model.getBoidsSubset(from, to);
 
             int r = new Random().nextInt(0xFFFFFF + 1);
+            Utils.log("length: "+boidSubset.size(), Thread.currentThread().getName());
             for (Boid boid : boidSubset) {
                 boid.setColorHex(String.format("#%06X", r));
             }
@@ -84,25 +84,25 @@ public class BoidsSimulator implements InputListener {
         model.newBoids();
 
         setWorkerThreads(divideWorkLoad());
+        
         Thread mainLoopThread = new Thread(() -> {
             try {
                 runSimulation();
             } catch (InterruptedException | BrokenBarrierException e) {
-                throw new RuntimeException(e);
+                Utils.log("Barrier has been broken!", Thread.currentThread().getName());
             }
         });
         mainLoopThread.start();
     }
 
     private void stopSimulation() {
+        stopFlag.set();
         model.setBoidNumber(0);
-        workerThreads.forEach(Thread::interrupt);
         pauseFlag.reset();
         stopFlag.reset();
         velocityBarrier.reset();
         positionBarrier.reset();
     }
-
     public void runSimulation() throws InterruptedException, BrokenBarrierException {
         while (true) {
             var t0 = System.currentTimeMillis();
@@ -150,7 +150,6 @@ public class BoidsSimulator implements InputListener {
 
     @Override
     public synchronized void stopped() {
-        stopFlag.set();
         stopSimulation();
     }
 

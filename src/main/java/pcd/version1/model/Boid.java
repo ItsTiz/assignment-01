@@ -1,9 +1,5 @@
 package pcd.version1.model;
 
-import pcd.version1.P2d;
-import pcd.version1.V2d;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class Boid {
