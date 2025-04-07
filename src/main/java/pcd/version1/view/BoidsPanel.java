@@ -2,7 +2,6 @@ package pcd.version1.view;
 
 import pcd.version1.model.Boid;
 import pcd.version1.model.BoidsModel;
-import pcd.version1.utils.Utils;
 
 import javax.swing.*;
 import java.awt.*;

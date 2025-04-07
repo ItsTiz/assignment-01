@@ -1,4 +1,4 @@
-package pcd.version1.controller;
+package pcd.version1.workers;
 
 import pcd.version1.model.P2d;
 import pcd.version1.model.V2d;

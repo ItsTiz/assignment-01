@@ -50,7 +50,7 @@ public class BoidsView implements ChangeListener, ActionListener {
         listeners.add(l);
     }
 
-    private void notifyStarted() throws BrokenBarrierException, InterruptedException {
+    private void notifyStarted() {
         for (InputListener listener : listeners) {
             listener.started();
         }
@@ -190,11 +190,7 @@ public class BoidsView implements ChangeListener, ActionListener {
         switch (e.getActionCommand()) {
             case "Start": {
                 notifyBoidsNumberChanged();
-                try {
-                    notifyStarted();
-                } catch (BrokenBarrierException | InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                }
+                notifyStarted();
                 resumeButton.setEnabled(true);
                 stopButton.setEnabled(true);
                 startButton.setEnabled(false);
