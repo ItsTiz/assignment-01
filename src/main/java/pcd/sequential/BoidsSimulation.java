@@ -11,7 +11,7 @@ public class BoidsSimulation {
     final static int ENVIRONMENT_WIDTH = 1000; 
 	final static int ENVIRONMENT_HEIGHT = 1000;
     static final double MAX_SPEED = 4.0;
-    static final double PERCEPTION_RADIUS = 50.0;
+    static final double PERCEPTION_RADIUS = 30.0;
     static final double AVOID_RADIUS = 20.0;
 
 	final static int SCREEN_WIDTH = 800; 
