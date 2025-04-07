@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class PauseFlag {
 	private boolean flag;
 	private final ReentrantLock lock = new ReentrantLock();
-	private final Condition unpaused = lock.newCondition();
+	private final Condition unPaused = lock.newCondition();
 
 	public PauseFlag() {
 		flag = false;
@@ -16,7 +16,7 @@ public class PauseFlag {
 		lock.lock();
 		try {
 			flag = false;
-			unpaused.signalAll();
+			unPaused.signalAll();
 		} finally {
 			lock.unlock();
 		}
@@ -44,7 +44,7 @@ public class PauseFlag {
 		lock.lock();
 		try {
 			while (flag) {
-				unpaused.await();
+				unPaused.await();
 			}
 		} finally {
 			lock.unlock();

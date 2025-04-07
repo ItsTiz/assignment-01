@@ -1,5 +1,7 @@
 package pcd.concurrent.shared.model;
 
+import pcd.concurrent.shared.utils.Utils;
+
 import java.util.*;
 
 public class SpatialGrid {

@@ -51,7 +51,7 @@ public class BoidSublistWorker implements Runnable {
                 positionBarrier.await();
 
             } catch (Exception e) {
-                System.err.println("Error in worker " + name + ": " + e.getMessage());
+                System.out.println("Worker " + name + " interrupted: " + e.getMessage());
                 Thread.currentThread().interrupt();
                 return;
             }

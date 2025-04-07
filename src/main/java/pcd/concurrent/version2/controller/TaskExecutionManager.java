@@ -23,12 +23,10 @@ public class TaskExecutionManager implements ExecutionManager {
 
     private final BoidsModel model;
     private final ExecutorService executor;
-    private final List<Callable<Void>> tasks;
 
     public TaskExecutionManager(BoidsModel model) {
         this.model = model;
         this.executor = Executors.newFixedThreadPool(nWorkers);
-        this.tasks = new ArrayList<>();
         this.pauseFlag = new PauseFlag();
         this.stopFlag = new StopFlag();
     }
