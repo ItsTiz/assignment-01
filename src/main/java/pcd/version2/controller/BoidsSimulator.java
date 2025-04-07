@@ -1,8 +1,9 @@
-package pcd.version1.controller;
+package pcd.version2.controller;
 
-import pcd.version1.model.BoidsModel;
-import pcd.version1.utils.Utils;
-import pcd.version1.view.BoidsView;
+import pcd.version2.model.BoidsModel;
+import pcd.version2.utils.Utils;
+import pcd.version2.view.BoidsView;
+
 import java.util.Optional;
 import java.util.concurrent.BrokenBarrierException;
 
@@ -14,13 +15,13 @@ public class BoidsSimulator implements InputListener {
     private Optional<BoidsView> view;
     private int framerate;
 
-    private final ThreadExecutionManager threadExecution;
+    private final TaskExecutionManager taskExecutor;
 
     public BoidsSimulator(BoidsModel model) {
         this.model = model;
         this.view = Optional.empty();
 
-        this.threadExecution = new ThreadExecutionManager(model);
+        this.taskExecutor = new TaskExecutionManager(model);
     }
 
     public void attachView(BoidsView view) {
@@ -29,36 +30,37 @@ public class BoidsSimulator implements InputListener {
 
     private void startSimulation() {
         model.newBoids();
-        threadExecution.resetSynchronizers();
-        threadExecution.startWorkers();
+        taskExecutor.resetSynchronizers();
+        taskExecutor.startWorkers();
 
         Thread mainLoopThread = new Thread(() -> {
             try {
                 runSimulation();
             } catch (InterruptedException | BrokenBarrierException e) {
                 Utils.log("Error in main simulation loop thread", Thread.currentThread().getName());
+                taskExecutor.shutdownExecutor();
             }
         });
         mainLoopThread.start();
     }
 
     private void stopSimulation() {
-        threadExecution.stopWorkers();
+        taskExecutor.stopWorkers();
     }
 
     private void pauseSimulation(){
-        threadExecution.pauseWorkers();
+        taskExecutor.pauseWorkers();
     }
 
     private void resumeSimulation(){
-        threadExecution.resumeWorkers();
+        taskExecutor.resumeWorkers();
     }
 
     public void runSimulation() throws InterruptedException, BrokenBarrierException {
         while (true) {
             var t0 = System.currentTimeMillis();
 
-            threadExecution.awaitStepCompletion();
+            taskExecutor.awaitStepCompletion();
 
             updateView(t0);
         }
