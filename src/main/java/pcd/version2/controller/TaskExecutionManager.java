@@ -1,7 +1,6 @@
 package pcd.version2.controller;
 
 import pcd.common.ExecutionManager;
-import pcd.version1.controller.ThreadExecutionManager;
 import pcd.version1.utils.Utils;
 import pcd.version2.model.Boid;
 import pcd.version2.model.BoidsModel;
@@ -10,7 +9,7 @@ import pcd.version2.monitors.StopFlag;
 import pcd.version2.tasks.PositionUpdateTask;
 import pcd.version2.tasks.VelocityUpdateTask;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -39,7 +38,12 @@ public class TaskExecutionManager implements ExecutionManager {
         pauseFlag.reset();
     }
 
-    private <T extends Callable<Void>> void executeTasks(Class<T> taskClass) {
+    private void mountAndRunTasks() {
+        executeTasks(createTasks(VelocityUpdateTask.class));
+        executeTasks(createTasks(PositionUpdateTask.class));
+    }
+
+    private <T extends Callable<Void>> List<Callable<Void>> createTasks(Class<T> taskClass) {
         int boidCount = model.getBoidNumber();
         int chunkSize = (int) Math.ceil((double) boidCount / nWorkers);
 
@@ -47,17 +51,10 @@ public class TaskExecutionManager implements ExecutionManager {
         for (int i = 0; i < boidCount; i += chunkSize) {
             try {
                 List<Boid> boidsSubset = model.getBoidsSubset(i, Math.min(i + chunkSize, boidCount));
-                tasks.add(taskClass.getConstructor(
-                                List.class,
-                                BoidsModel.class,
-                                PauseFlag.class,
-                                StopFlag.class
-                        ).newInstance(
-                                    boidsSubset,
-                                    model,
-                                    pauseFlag,
-                                    stopFlag
-                        ));
+                Constructor<T> taskConstructor =
+                        taskClass.getConstructor(List.class, BoidsModel.class, PauseFlag.class, StopFlag.class);
+                T task = taskConstructor.newInstance(boidsSubset, model, pauseFlag, stopFlag);
+                tasks.add(task);
             } catch (Exception e) {
                 Utils.log("Error while creating tasks: " + e.getMessage(), Thread.currentThread().getName());
                 Thread.currentThread().interrupt();
@@ -65,12 +62,17 @@ public class TaskExecutionManager implements ExecutionManager {
             }
         }
 
+        return tasks;
+    }
+
+    private void executeTasks(List<Callable<Void>> tasks) {
         try {
             executor.invokeAll(tasks);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
+
 
     @Override
     public void startWorkers() {
@@ -110,8 +112,7 @@ public class TaskExecutionManager implements ExecutionManager {
 
     @Override
     public void awaitStepCompletion() {
-        executeTasks(VelocityUpdateTask.class);
-        executeTasks(PositionUpdateTask.class);
+        mountAndRunTasks();
         model.updateSpatialGrid();
     }
 }
