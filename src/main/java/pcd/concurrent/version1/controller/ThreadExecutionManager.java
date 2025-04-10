@@ -5,11 +5,14 @@ import pcd.concurrent.shared.model.Boid;
 import pcd.concurrent.shared.model.BoidsModel;
 import pcd.concurrent.shared.monitors.PauseFlag;
 import pcd.concurrent.shared.monitors.StopFlag;
+import pcd.concurrent.shared.utils.Utils;
 import pcd.concurrent.version1.workers.BoidSublistWorker;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
+//import pcd.concurrent.shared.sync.CyclicBarrier;
+
 import java.util.concurrent.CyclicBarrier;
 import java.util.function.Consumer;
 
@@ -109,10 +112,9 @@ public class ThreadExecutionManager implements ExecutionManager {
     public void awaitStepCompletion() {
         try {
             velocityBarrier.await();
-
             positionBarrier.await();
         } catch (InterruptedException | BrokenBarrierException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 }

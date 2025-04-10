@@ -50,8 +50,7 @@ public class BoidsModel {
     }
 
     private List<Boid> generateRandomBoids(int nboids) {
-        final List<Boid> boids;
-        boids = new ArrayList<>();
+        final List<Boid> boids = new ArrayList<>();
         for (int i = 0; i < nboids; i++) {
             P2d pos = new P2d(-width / 2 + Math.random() * width, -height / 2 + Math.random() * height);
             V2d vel = new V2d(Math.random() * maxSpeed / 2 - maxSpeed / 4, Math.random() * maxSpeed / 2 - maxSpeed / 4);

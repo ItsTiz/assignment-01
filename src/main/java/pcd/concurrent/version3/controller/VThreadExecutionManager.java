@@ -12,7 +12,6 @@ import pcd.concurrent.version3.tasks.VelocityUpdateTask;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class VThreadExecutionManager implements ExecutionManager {
@@ -44,7 +43,6 @@ public class VThreadExecutionManager implements ExecutionManager {
     @Override
     public void stopWorkers() {
         stopFlag.set();
-        doForEachThread(Thread::interrupt);
         velocityThreads.clear();
         positionThreads.clear();
     }
@@ -63,14 +61,14 @@ public class VThreadExecutionManager implements ExecutionManager {
 
     @Override
     public void awaitStepCompletion() {
+        if(stopFlag.isSet()) Thread.currentThread().interrupt();
         velocityThreads.addAll(createTasks(VelocityUpdateTask.class));
-
         waitAll(velocityThreads);
-        velocityThreads.clear();
 
         positionThreads.addAll(createTasks(PositionUpdateTask.class));
-
         waitAll(positionThreads);
+
+        velocityThreads.clear();
         positionThreads.clear();
 
         model.updateSpatialGrid();
@@ -81,18 +79,9 @@ public class VThreadExecutionManager implements ExecutionManager {
             try {
                 t.join();
             } catch (InterruptedException e) {
-                System.out.println("Task interrupted: " + e.getMessage());
+                Utils.log("Task interrupted abruptly.", Thread.currentThread().getName());
                 Thread.currentThread().interrupt();
             }
-        }
-    }
-
-    private void doForEachThread(Consumer<Thread> action) {
-        for (Thread worker : velocityThreads) {
-            action.accept(worker);
-        }
-        for (Thread worker : positionThreads) {
-            action.accept(worker);
         }
     }
 
@@ -101,8 +90,11 @@ public class VThreadExecutionManager implements ExecutionManager {
         List<Thread> threads = new ArrayList<>();
         for (Boid boid: model.getBoids()) {
             try {
-                Constructor<T> taskConstructor =
-                        taskClass.getConstructor(Boid.class, BoidsModel.class, PauseFlag.class, StopFlag.class);
+                Constructor<T> taskConstructor = taskClass.getConstructor(
+                        Boid.class,
+                        BoidsModel.class,
+                        PauseFlag.class,
+                        StopFlag.class);
                 T task = taskConstructor.newInstance(boid, model, pauseFlag, stopFlag);
                 Thread vThread = Thread.ofVirtual().start(task);
                 threads.add(vThread);

@@ -2,12 +2,9 @@ package pcd.concurrent.version3.tasks;
 
 import pcd.concurrent.shared.model.Boid;
 import pcd.concurrent.shared.model.BoidsModel;
-import pcd.concurrent.shared.model.V2d;
 import pcd.concurrent.shared.monitors.PauseFlag;
 import pcd.concurrent.shared.monitors.StopFlag;
-
-import java.util.List;
-import java.util.concurrent.Callable;
+import pcd.concurrent.shared.utils.Utils;
 
 public class VelocityUpdateTask implements Runnable {
 
@@ -23,24 +20,6 @@ public class VelocityUpdateTask implements Runnable {
         this.stopFlag = stopFlag;
     }
 
-    public void updateVelocity(Boid boid) {
-        List<Boid> nearbyBoids = model.getNearbyBoids(boid);
-
-        V2d separation = boid.calculateSeparation(nearbyBoids, model);
-        V2d alignment = boid.calculateAlignment(nearbyBoids);
-        V2d cohesion = boid.calculateCohesion(nearbyBoids);
-
-        boid.setVel(boid.getVel().sum(alignment.mul(model.getAlignmentWeight()))
-                .sum(separation.mul(model.getSeparationWeight()))
-                .sum(cohesion.mul(model.getCohesionWeight())));
-
-        double speed = boid.getVel().abs();
-
-        if (speed > model.getMaxSpeed()) {
-            boid.setVel(boid.getVel().getNormalized().mul(model.getMaxSpeed()));
-        }
-    }
-
     @Override
     public void run() {
         try {
@@ -48,10 +27,10 @@ public class VelocityUpdateTask implements Runnable {
 
             if (stopFlag.isSet()) return;
 
-            updateVelocity(boid);
+            Boid.updateVelocity(model, boid);
 
         } catch (InterruptedException e) {
-            System.out.println("Task interrupted: " + e.getMessage());
+            Utils.log("Velocity task interrupted.", Thread.currentThread().getName());
             Thread.currentThread().interrupt();
         }
     }

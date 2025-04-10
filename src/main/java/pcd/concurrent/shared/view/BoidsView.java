@@ -82,16 +82,22 @@ public class BoidsView implements ChangeListener, ActionListener {
         listeners.forEach(listener -> listener.cohesionWeightChanged(weight));
     }
 
-    private void notifyBoidsNumberChanged() {
+    private boolean notifyBoidsNumberChanged() {
         try {
             int newCount = Integer.parseInt(boidCountField.getText().trim());
             if (newCount > 0) {
                 listeners.forEach(listener -> listener.boidsNumberChanged(newCount));
+                return true;
             } else {
-                JOptionPane.showMessageDialog(frame, "Enter a positive number!", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                throw new NumberFormatException();
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(frame, "Invalid number! Please enter an integer.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Invalid number! Please enter a positive integer.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
@@ -116,8 +122,7 @@ public class BoidsView implements ChangeListener, ActionListener {
 
         JLabel boidLabel = new JLabel("Boids:");
         boidCountField = new JTextField("1500", 5);
-
-        startButton.addActionListener(e -> notifyBoidsNumberChanged());
+        boidCountField.setPreferredSize(new Dimension(100, 30));
 
         header.add(boidLabel);
         header.add(boidCountField);
@@ -191,12 +196,13 @@ public class BoidsView implements ChangeListener, ActionListener {
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
             case "Start": {
-                notifyBoidsNumberChanged();
-                notifyStarted();
-                resumeButton.setEnabled(true);
-                stopButton.setEnabled(true);
-                startButton.setEnabled(false);
-                boidCountField.setEnabled(false);
+                if(notifyBoidsNumberChanged()) {
+                    notifyStarted();
+                    resumeButton.setEnabled(true);
+                    stopButton.setEnabled(true);
+                    startButton.setEnabled(false);
+                    boidCountField.setEnabled(false);
+                }
                 break;
             }
             case "Pause": {
@@ -210,7 +216,7 @@ public class BoidsView implements ChangeListener, ActionListener {
                 break;
             }
             case "Stop": {
-                notifyStopped();
+                SwingUtilities.invokeLater(this::notifyStopped);
                 startButton.setEnabled(true);
                 boidCountField.setEnabled(true);
                 resumeButton.setText("Pause");

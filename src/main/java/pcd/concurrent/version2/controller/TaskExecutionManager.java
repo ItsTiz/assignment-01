@@ -22,7 +22,7 @@ public class TaskExecutionManager implements ExecutionManager {
     private final StopFlag stopFlag;
 
     private final BoidsModel model;
-    private final ExecutorService executor;
+    private ExecutorService executor;
 
     public TaskExecutionManager(BoidsModel model) {
         this.model = model;
@@ -66,7 +66,7 @@ public class TaskExecutionManager implements ExecutionManager {
     private void executeTasks(List<Callable<Void>> tasks) {
         try {
             executor.invokeAll(tasks);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | RejectedExecutionException e) {
             Thread.currentThread().interrupt();
         }
     }
@@ -76,21 +76,21 @@ public class TaskExecutionManager implements ExecutionManager {
 
     public void shutdownExecutor() {
         if (!executor.isShutdown()) {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
+            executor.shutdownNow();
+            Utils.log("Executor has been shutdown.",Thread.currentThread().getName());
         }
+    }
+
+    public void resetExecutor() {
+        this.executor = Executors.newFixedThreadPool(nWorkers);
+        Utils.log("Executor has been reset.",Thread.currentThread().getName());
     }
 
     @Override
     public void stopWorkers() {
         stopFlag.set();
+        shutdownExecutor();
+        resetExecutor();
     }
 
     @Override
@@ -107,6 +107,9 @@ public class TaskExecutionManager implements ExecutionManager {
 
     @Override
     public void awaitStepCompletion() {
+        if (stopFlag.isSet() || Thread.currentThread().isInterrupted()) {
+            Thread.currentThread().interrupt();
+        }
         mountAndRunTasks();
         model.updateSpatialGrid();
     }

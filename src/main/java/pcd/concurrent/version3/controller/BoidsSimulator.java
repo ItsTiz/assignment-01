@@ -17,6 +17,7 @@ public class BoidsSimulator implements InputListener {
     private int framerate;
 
     private final VThreadExecutionManager virtualThreadExecutor;
+    private Thread mainLoopThread;
 
     public BoidsSimulator(BoidsModel model) {
         this.model = model;
@@ -33,18 +34,24 @@ public class BoidsSimulator implements InputListener {
         model.newBoids();
         virtualThreadExecutor.resetSynchronizers();
 
-        Thread mainLoopThread = new Thread(() -> {
-            try {
-                runSimulation();
-            } catch (InterruptedException | BrokenBarrierException e) {
-                Utils.log("Error in main simulation loop thread", Thread.currentThread().getName());
-            }
-        });
+        mainLoopThread = new Thread(this::runSimulation);
         mainLoopThread.start();
     }
 
     private void stopSimulation() {
         virtualThreadExecutor.stopWorkers();
+        interruptMainLoop();
+    }
+
+    private void interruptMainLoop() {
+        if (mainLoopThread != null && mainLoopThread.isAlive()) {
+            mainLoopThread.interrupt();
+            try {
+                mainLoopThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void pauseSimulation(){
@@ -53,16 +60,6 @@ public class BoidsSimulator implements InputListener {
 
     private void resumeSimulation(){
         virtualThreadExecutor.resumeWorkers();
-    }
-
-    public void runSimulation() throws InterruptedException, BrokenBarrierException {
-        while (true) {
-            var t0 = System.currentTimeMillis();
-
-            virtualThreadExecutor.awaitStepCompletion();
-
-            updateView(t0);
-        }
     }
 
     private void updateView(long t0) {
@@ -81,6 +78,18 @@ public class BoidsSimulator implements InputListener {
             } else {
                 framerate = (int) (1000 / dtElapsed);
             }
+        }
+    }
+
+    public void runSimulation() {
+        while (!Thread.currentThread().isInterrupted()) {
+            var t0 = System.currentTimeMillis();
+
+            virtualThreadExecutor.awaitStepCompletion();
+
+            if (Thread.currentThread().isInterrupted()) break;
+
+            updateView(t0);
         }
     }
 

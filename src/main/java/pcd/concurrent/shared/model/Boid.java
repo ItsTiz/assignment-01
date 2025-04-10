@@ -92,4 +92,30 @@ public class Boid {
         	return new V2d(0, 0);
         }
     }
+
+    public static void updateVelocity(BoidsModel model, Boid boid) {
+        List<Boid> nearbyBoids = model.getNearbyBoids(boid);
+
+        V2d separation = boid.calculateSeparation(nearbyBoids, model);
+        V2d alignment = boid.calculateAlignment(nearbyBoids);
+        V2d cohesion = boid.calculateCohesion(nearbyBoids);
+
+        boid.setVel(boid.getVel().sum(alignment.mul(model.getAlignmentWeight()))
+                .sum(separation.mul(model.getSeparationWeight()))
+                .sum(cohesion.mul(model.getCohesionWeight())));
+        double speed = boid.getVel().abs();
+        if (speed > model.getMaxSpeed()) {
+            boid.setVel(boid.getVel().getNormalized().mul(model.getMaxSpeed()));
+        }
+    }
+
+    public static void updatePos(BoidsModel model, Boid boid) {
+        boid.setPos(boid.getPos().sum(boid.getVel()));
+
+        P2d pos = boid.getPos();
+        if (pos.x() < model.getMinX()) boid.setPos(pos.sum(new V2d(model.getWidth(), 0)));
+        if (pos.x() >= model.getMaxX()) boid.setPos(pos.sum(new V2d(-model.getWidth(), 0)));
+        if (pos.y() < model.getMinY()) boid.setPos(pos.sum(new V2d(0, model.getHeight())));
+        if (pos.y() >= model.getMaxY()) boid.setPos(pos.sum(new V2d(0, -model.getHeight())));
+    }
 }

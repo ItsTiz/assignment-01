@@ -14,6 +14,7 @@ public class BoidsSimulator implements InputListener {
     private final BoidsModel model;
     private Optional<BoidsView> view;
     private int framerate;
+    private Thread mainLoopThread;
 
     private final ThreadExecutionManager threadExecution;
 
@@ -34,7 +35,7 @@ public class BoidsSimulator implements InputListener {
         threadExecution.startWorkers();
         notifyWorkersCreated();
 
-        Thread mainLoopThread = new Thread(() -> {
+        mainLoopThread = new Thread(() -> {
             try {
                 runSimulation();
             } catch (InterruptedException | BrokenBarrierException e) {
@@ -52,6 +53,20 @@ public class BoidsSimulator implements InputListener {
 
     private void stopSimulation() {
         threadExecution.stopWorkers();
+
+        interruptMainLoop();
+    }
+
+    private void interruptMainLoop() {
+        if (mainLoopThread != null && mainLoopThread.isAlive()) {
+            mainLoopThread.interrupt();
+            try {
+                mainLoopThread.join();
+            } catch (InterruptedException e) {
+                Utils.log("Main simulation loop thread interrupted.", Thread.currentThread().getName());
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void pauseSimulation(){
@@ -63,10 +78,12 @@ public class BoidsSimulator implements InputListener {
     }
 
     public void runSimulation() throws InterruptedException, BrokenBarrierException {
-        while (true) {
+        while (!Thread.currentThread().isInterrupted()) {
             var t0 = System.currentTimeMillis();
 
             threadExecution.awaitStepCompletion();
+
+            if (Thread.currentThread().isInterrupted()) break;
 
             updateView(t0);
         }

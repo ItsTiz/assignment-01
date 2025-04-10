@@ -17,6 +17,7 @@ public class BoidsSimulator implements InputListener {
     private int framerate;
 
     private final TaskExecutionManager taskExecutor;
+    private Thread mainLoopThread;
 
     public BoidsSimulator(BoidsModel model) {
         this.model = model;
@@ -33,11 +34,11 @@ public class BoidsSimulator implements InputListener {
         model.newBoids();
         taskExecutor.resetSynchronizers();
 
-        Thread mainLoopThread = new Thread(() -> {
+        mainLoopThread = new Thread(() -> {
             try {
                 runSimulation();
-            } catch (InterruptedException | BrokenBarrierException e) {
-                Utils.log("Error in main simulation loop thread", Thread.currentThread().getName());
+            } catch (InterruptedException e) {
+                Utils.log("Main simulation loop thread interrupted.", Thread.currentThread().getName());
                 taskExecutor.shutdownExecutor();
             }
         });
@@ -46,6 +47,18 @@ public class BoidsSimulator implements InputListener {
 
     private void stopSimulation() {
         taskExecutor.stopWorkers();
+        interruptMainLoop();
+    }
+
+    private void interruptMainLoop() {
+        if (mainLoopThread != null && mainLoopThread.isAlive()) {
+            mainLoopThread.interrupt();
+            try {
+                mainLoopThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void pauseSimulation(){
@@ -56,11 +69,13 @@ public class BoidsSimulator implements InputListener {
         taskExecutor.resumeWorkers();
     }
 
-    public void runSimulation() throws InterruptedException, BrokenBarrierException {
-        while (true) {
+    public void runSimulation() throws InterruptedException {
+        while (!Thread.currentThread().isInterrupted()) {
             var t0 = System.currentTimeMillis();
 
             taskExecutor.awaitStepCompletion();
+
+            if(Thread.currentThread().isInterrupted()) break;
 
             updateView(t0);
         }
