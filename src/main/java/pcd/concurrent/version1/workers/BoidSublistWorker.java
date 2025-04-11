@@ -4,19 +4,17 @@ import pcd.concurrent.shared.model.Boid;
 import pcd.concurrent.shared.model.BoidsModel;
 import pcd.concurrent.shared.monitors.PauseFlag;
 import pcd.concurrent.shared.monitors.StopFlag;
+import pcd.concurrent.shared.monitors.CyclicBarrierImpl;
 
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
-//import pcd.concurrent.shared.sync.CyclicBarrier;
-
 
 public class BoidSublistWorker implements Runnable {
 
     private final String name;
     private final BoidsModel model;
     private final List<Boid> boidsSubset;
-    private final CyclicBarrier velocityBarrier;
-    private final CyclicBarrier positionBarrier;
+    private final CyclicBarrierImpl velocityBarrier;
+    private final CyclicBarrierImpl positionBarrier;
     private final PauseFlag pauseFlag;
     private final StopFlag stopFlag;
 
@@ -24,8 +22,8 @@ public class BoidSublistWorker implements Runnable {
             String name,
             BoidsModel model,
             List<Boid> boidsSubset,
-            CyclicBarrier velocityBarrier,
-            CyclicBarrier positionBarrier,
+            CyclicBarrierImpl velocityBarrier,
+            CyclicBarrierImpl positionBarrier,
             PauseFlag pauseFlag,
             StopFlag stopFlag
     ) {

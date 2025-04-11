@@ -82,7 +82,6 @@ public class BoidsSimulator implements InputListener {
             var t0 = System.currentTimeMillis();
 
             threadExecution.awaitStepCompletion();
-
             if (Thread.currentThread().isInterrupted()) break;
 
             updateView(t0);
