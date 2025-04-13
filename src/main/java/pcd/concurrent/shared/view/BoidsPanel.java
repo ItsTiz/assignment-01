@@ -44,9 +44,27 @@ public class BoidsPanel extends JPanel {
         var w = view.getWidth();
         var h = view.getHeight();
         var envWidth = model.getWidth();
-        var xScale = w/envWidth;
+        var envHeight = model.getHeight();
+        var xScale = 1;
+        var yScale = 1;
 
         var boids = model.getBoids();
+
+        var cellSize = model.getPerceptionRadius();
+
+        g.setColor(Color.LIGHT_GRAY);
+
+        // Vertical lines (X axis)
+        for (int x = (int) (-envWidth / 2); x <= envWidth / 2; x += cellSize) {
+            int screenX = (int) (w / 2 + x * xScale);
+            g.drawLine(screenX, 0, screenX, h);
+        }
+
+        // Horizontal lines (Y axis)
+        for (int y = (int) (-envHeight / 2); y <= envHeight / 2; y += cellSize) {
+            int screenY = (int) (h / 2 - y * yScale);
+            g.drawLine(0, screenY, w, screenY);
+        }
 
         for (Boid boid : boids) {
             String hexColor = boid.getCurrentHandler() != null ? workerIdentifiers.get(boid.getCurrentHandler())  : "#269744";

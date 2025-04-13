@@ -29,7 +29,7 @@ public class ThreadExecutionManager implements ExecutionManager {
         this.model = model;
         this.workerThreads = new ArrayList<>();
         this.velocityBarrier = new CyclicBarrierImpl (nWorkers + 1); //+1 for main simulation loop thread
-        this.positionBarrier = new CyclicBarrierImpl (nWorkers + 1, model::updateSpatialGrid);
+        this.positionBarrier = new CyclicBarrierImpl (nWorkers + 1/*, model::updateSpatialGrid*/);
         this.pauseFlag = new PauseFlag();
         this.stopFlag = new StopFlag();
     }

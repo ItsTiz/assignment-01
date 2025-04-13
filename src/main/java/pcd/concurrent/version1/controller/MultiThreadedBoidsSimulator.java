@@ -1,52 +1,70 @@
-package pcd.concurrent.version2.controller;
+package pcd.concurrent.version1.controller;
 
 import pcd.concurrent.shared.controller.InputListener;
 import pcd.concurrent.shared.model.BoidsModel;
 import pcd.concurrent.shared.utils.Utils;
 import pcd.concurrent.shared.view.BoidsView;
-
 import java.util.Optional;
 import java.util.concurrent.BrokenBarrierException;
 
-public class BoidsSimulator implements InputListener {
+public class MultiThreadedBoidsSimulator implements InputListener {
 
     private static final int FRAMERATE = 60;
 
     private final BoidsModel model;
+    private final int steps;
     private Optional<BoidsView> view;
     private int framerate;
-
-    private final TaskExecutionManager taskExecutor;
     private Thread mainLoopThread;
 
-    public BoidsSimulator(BoidsModel model) {
+    private final ThreadExecutionManager threadExecution;
+
+    public MultiThreadedBoidsSimulator(BoidsModel model, int steps) {
         this.model = model;
+        this.steps = steps;
         this.view = Optional.empty();
 
-        this.taskExecutor = new TaskExecutionManager(model);
+        this.threadExecution = new ThreadExecutionManager(model);
+    }
+
+    public MultiThreadedBoidsSimulator(BoidsModel model) {
+        this(model, -1);
     }
 
     public void attachView(BoidsView view) {
         this.view = Optional.of(view);
     }
 
-    private void startSimulation() {
+    public void startSimulation() {
         model.newBoids();
-        taskExecutor.resetSynchronizers();
+        threadExecution.resetSynchronizers();
+        threadExecution.startWorkers();
+        notifyWorkersCreated();
 
         mainLoopThread = new Thread(() -> {
             try {
-                runSimulation();
-            } catch (InterruptedException e) {
-                Utils.log("Main simulation loop thread interrupted.", Thread.currentThread().getName());
-                taskExecutor.shutdownExecutor();
+                if(this.steps > 0) {
+                    runSimulationWithTimings(steps);
+                }else {
+                    runSimulation();
+                }
+
+            } catch (InterruptedException | BrokenBarrierException e) {
+                Utils.log("Error in main simulation loop thread", Thread.currentThread().getName());
             }
         });
         mainLoopThread.start();
     }
 
+    private void notifyWorkersCreated() {
+        view.ifPresent(boidsView ->
+                boidsView.onWorkersCreated(threadExecution.getWorkerThreads().stream().map(Thread::getName).toList())
+        );
+    }
+
     private void stopSimulation() {
-        taskExecutor.stopWorkers();
+        threadExecution.stopWorkers();
+
         interruptMainLoop();
     }
 
@@ -56,29 +74,45 @@ public class BoidsSimulator implements InputListener {
             try {
                 mainLoopThread.join();
             } catch (InterruptedException e) {
+                Utils.log("Main simulation loop thread interrupted.", Thread.currentThread().getName());
                 Thread.currentThread().interrupt();
             }
         }
     }
 
     private void pauseSimulation(){
-        taskExecutor.pauseWorkers();
+        threadExecution.pauseWorkers();
     }
 
     private void resumeSimulation(){
-        taskExecutor.resumeWorkers();
+        threadExecution.resumeWorkers();
     }
 
-    public void runSimulation() throws InterruptedException {
+    public void runSimulation() throws InterruptedException, BrokenBarrierException {
         while (!Thread.currentThread().isInterrupted()) {
             var t0 = System.currentTimeMillis();
 
-            taskExecutor.awaitStepCompletion();
-
-            if(Thread.currentThread().isInterrupted()) break;
+            threadExecution.awaitStepCompletion();
+            if (Thread.currentThread().isInterrupted()) break;
 
             updateView(t0);
         }
+    }
+
+    public void runSimulationWithTimings(int steps){
+        long start = System.nanoTime();
+        for (int i = 0; i < steps; i++) {
+            var t0 = System.currentTimeMillis();
+
+            threadExecution.awaitStepCompletion();
+            if (Thread.currentThread().isInterrupted()) break;
+
+            updateView(t0);
+        }
+        long end = System.nanoTime();
+        double durationMs = (end - start) / 1_000_000.0;
+        System.out.printf("Completed %d steps in %.2f ms (%.2f ms/step)%n",
+                steps, durationMs, durationMs / steps);
     }
 
     private void updateView(long t0) {

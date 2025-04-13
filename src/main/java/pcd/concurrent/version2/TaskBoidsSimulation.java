@@ -1,10 +1,10 @@
-package pcd.concurrent.version3;
+package pcd.concurrent.version2;
 
+import pcd.concurrent.version2.controller.TaskBoidsSimulator;
 import pcd.concurrent.shared.model.BoidsModel;
 import pcd.concurrent.shared.view.BoidsView;
-import pcd.concurrent.version3.controller.BoidsSimulator;
 
-public class BoidsSimulation {
+public class TaskBoidsSimulation {
     final static double SEPARATION_WEIGHT = 1.0;
     final static double ALIGNMENT_WEIGHT = 1.0;
     final static double COHESION_WEIGHT = 1.0;
@@ -26,7 +26,7 @@ public class BoidsSimulation {
                 MAX_SPEED,
                 PERCEPTION_RADIUS,
                 AVOID_RADIUS);
-        var sim = new BoidsSimulator(model);
+        var sim = new TaskBoidsSimulator(model);
         var view = new BoidsView(model, SCREEN_WIDTH, SCREEN_HEIGHT);
         view.addListener(sim);
         sim.attachView(view);

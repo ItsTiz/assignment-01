@@ -1,4 +1,4 @@
-package pcd.concurrent.version3.controller;
+package pcd.concurrent.version2.controller;
 
 import pcd.concurrent.shared.controller.InputListener;
 import pcd.concurrent.shared.model.BoidsModel;
@@ -6,9 +6,8 @@ import pcd.concurrent.shared.utils.Utils;
 import pcd.concurrent.shared.view.BoidsView;
 
 import java.util.Optional;
-import java.util.concurrent.BrokenBarrierException;
 
-public class BoidsSimulator implements InputListener {
+public class TaskBoidsSimulator implements InputListener {
 
     private static final int FRAMERATE = 60;
 
@@ -16,14 +15,20 @@ public class BoidsSimulator implements InputListener {
     private Optional<BoidsView> view;
     private int framerate;
 
-    private final VThreadExecutionManager virtualThreadExecutor;
+    private final TaskExecutionManager taskExecutor;
     private Thread mainLoopThread;
+    private final int steps;
 
-    public BoidsSimulator(BoidsModel model) {
+    public TaskBoidsSimulator(BoidsModel model, int steps) {
         this.model = model;
+        this.steps = steps;
         this.view = Optional.empty();
 
-        this.virtualThreadExecutor = new VThreadExecutionManager(model);
+        this.taskExecutor = new TaskExecutionManager(model);
+    }
+
+    public TaskBoidsSimulator(BoidsModel model) {
+        this(model, 0);
     }
 
     public void attachView(BoidsView view) {
@@ -32,14 +37,42 @@ public class BoidsSimulator implements InputListener {
 
     private void startSimulation() {
         model.newBoids();
-        virtualThreadExecutor.resetSynchronizers();
+        taskExecutor.resetSynchronizers();
 
-        mainLoopThread = new Thread(this::runSimulation);
+        mainLoopThread = new Thread(() -> {
+            try {
+                if(this.steps > 0) {
+                    runSimulationWithTimings(steps);
+                }else {
+                    runSimulation();
+                }
+            } catch (InterruptedException e) {
+                Utils.log("Main simulation loop thread interrupted.", Thread.currentThread().getName());
+                taskExecutor.shutdownExecutor();
+            }
+        });
         mainLoopThread.start();
     }
 
+    private void runSimulationWithTimings(int steps) {
+        long start = System.nanoTime();
+        for (int i = 0; i < steps; i++) {
+            var t0 = System.currentTimeMillis();
+
+            taskExecutor.awaitStepCompletion();
+            if (Thread.currentThread().isInterrupted()) break;
+
+            updateView(t0);
+        }
+        long end = System.nanoTime();
+        double durationMs = (end - start) / 1_000_000.0;
+        System.out.printf("Completed %d steps in %.2f ms (%.2f ms/step)%n",
+                steps, durationMs, durationMs / steps);
+
+    }
+
     private void stopSimulation() {
-        virtualThreadExecutor.stopWorkers();
+        taskExecutor.stopWorkers();
         interruptMainLoop();
     }
 
@@ -55,11 +88,23 @@ public class BoidsSimulator implements InputListener {
     }
 
     private void pauseSimulation(){
-        virtualThreadExecutor.pauseWorkers();
+        taskExecutor.pauseWorkers();
     }
 
     private void resumeSimulation(){
-        virtualThreadExecutor.resumeWorkers();
+        taskExecutor.resumeWorkers();
+    }
+
+    public void runSimulation() throws InterruptedException {
+        while (!Thread.currentThread().isInterrupted()) {
+            var t0 = System.currentTimeMillis();
+
+            taskExecutor.awaitStepCompletion();
+
+            if(Thread.currentThread().isInterrupted()) break;
+
+            updateView(t0);
+        }
     }
 
     private void updateView(long t0) {
@@ -78,18 +123,6 @@ public class BoidsSimulator implements InputListener {
             } else {
                 framerate = (int) (1000 / dtElapsed);
             }
-        }
-    }
-
-    public void runSimulation() {
-        while (!Thread.currentThread().isInterrupted()) {
-            var t0 = System.currentTimeMillis();
-
-            virtualThreadExecutor.awaitStepCompletion();
-
-            if (Thread.currentThread().isInterrupted()) break;
-
-            updateView(t0);
         }
     }
 

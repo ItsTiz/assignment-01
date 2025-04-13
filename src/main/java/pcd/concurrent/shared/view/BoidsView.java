@@ -20,14 +20,12 @@ public class BoidsView implements ChangeListener, ActionListener {
     private JSlider cohesionSlider, separationSlider, alignmentSlider;
     private JButton startButton, resumeButton, stopButton;
     private JTextField boidCountField;
-    private final BoidsModel model;
     private final int width;
     private final int height;
 
     private final ArrayList<InputListener> listeners;
 
     public BoidsView(BoidsModel model, int width, int height) {
-        this.model = model;
         this.width = width;
         this.height = height;
 

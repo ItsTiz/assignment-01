@@ -7,7 +7,7 @@ import java.util.List;
 public class BoidsModel {
 
     private final List<Boid> boids;
-    private final SpatialGrid spatialGrid;
+    //private final SpatialGrid spatialGrid;
     private int boidNumber;
     private double separationWeight;
     private double alignmentWeight;
@@ -38,7 +38,7 @@ public class BoidsModel {
         this.maxSpeed = maxSpeed;
         this.perceptionRadius = perceptionRadius;
         this.avoidRadius = avoidRadius;
-        this.spatialGrid = new SpatialGrid(perceptionRadius);
+        //this.spatialGrid = new SpatialGrid(perceptionRadius);
     }
 
     public int getBoidNumber() {
@@ -62,7 +62,7 @@ public class BoidsModel {
     public void newBoids() {
         boids.clear();
         boids.addAll(generateRandomBoids(boidNumber));
-        spatialGrid.updateGrid(boids);
+        //spatialGrid.updateGrid(boids);
     }
 
     public List<Boid> getBoids() {
@@ -75,12 +75,26 @@ public class BoidsModel {
     }
 
     public List<Boid> getNearbyBoids(Boid boid) {
-        return spatialGrid.getNearbyBoids(boid, getPerceptionRadius());
+
+        //return spatialGrid.getNearbyBoids(boid, getPerceptionRadius());
+
+        var list = new ArrayList<Boid>();
+        for (Boid other : boids) {
+            if (other != boid) {
+                P2d otherPos = other.getPos();
+                double distance = boid.getPos().distance(otherPos);
+                if (distance < getPerceptionRadius()) {
+                    list.add(other);
+                }
+            }
+        }
+        return list;
+
     }
 
-    public void updateSpatialGrid() {
-        spatialGrid.updateGrid(getBoids());
-    }
+//    public void updateSpatialGrid() {
+//        spatialGrid.updateGrid(getBoids());
+//    }
 
     public double getMinX() {
         return -width / 2;

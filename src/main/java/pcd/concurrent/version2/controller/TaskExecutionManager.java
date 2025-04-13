@@ -111,6 +111,6 @@ public class TaskExecutionManager implements ExecutionManager {
             Thread.currentThread().interrupt();
         }
         mountAndRunTasks();
-        model.updateSpatialGrid();
+        //model.updateSpatialGrid();
     }
 }

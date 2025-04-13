@@ -71,7 +71,7 @@ public class VThreadExecutionManager implements ExecutionManager {
         velocityThreads.clear();
         positionThreads.clear();
 
-        model.updateSpatialGrid();
+        //model.updateSpatialGrid();
     }
 
     private void waitAll(List<Thread> threads) {

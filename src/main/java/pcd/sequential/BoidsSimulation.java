@@ -2,7 +2,7 @@ package pcd.sequential;
 
 public class BoidsSimulation {
 
-	final static int N_BOIDS = 8000;
+	final static int N_BOIDS = 1500;
 
 	final static double SEPARATION_WEIGHT = 1.0;
     final static double ALIGNMENT_WEIGHT = 1.0;
@@ -29,6 +29,12 @@ public class BoidsSimulation {
     	var sim = new BoidsSimulator(model);
     	var view = new BoidsView(model, SCREEN_WIDTH, SCREEN_HEIGHT);
     	sim.attachView(view);
+		long start = System.nanoTime();
     	sim.runSimulation();
+		long end = System.nanoTime();
+
+		double durationMs = (end - start) / 1_000_000.0;
+		System.out.printf("Completed %d steps in %.2f ms (%.2f ms/step)%n",
+				500, durationMs, durationMs / 500);
     }
 }
