@@ -4,6 +4,10 @@ import pcd.concurrent.shared.model.BoidsModel;
 import pcd.concurrent.shared.view.BoidsView;
 import pcd.concurrent.version3.controller.BoidsSimulator;
 
+/**
+ * @author Tiziano Vuksan - tiziano.vuksan@studio.unibo.it
+ */
+
 public class BoidsSimulation {
     final static double SEPARATION_WEIGHT = 1.0;
     final static double ALIGNMENT_WEIGHT = 1.0;

@@ -10,8 +10,7 @@ package pcd.concurrent.shared;
  * coordination and synchronization among threads according to the
  * specific requirements of the concurrent system.
  *
- * @author Tiziano Vuksan
- * @email tiziano.vuksan@studio.unibo.it
+ * @author Tiziano Vuksan - tiziano.vuksan@studio.unibo.it
  */
 public interface ExecutionManager {
 

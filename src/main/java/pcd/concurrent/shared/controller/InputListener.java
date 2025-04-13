@@ -8,8 +8,7 @@ package pcd.concurrent.shared.controller;
  * This listener is typically used by the controller component in an MVC architecture
  * to notify the simulation engine of UI actions.
  *
- * @author Tiziano Vuksan
- * @email tiziano.vuksan@studio.unibo.it
+ * @author Tiziano Vuksan - tiziano.vuksan@studio.unibo.it
  */
 public interface InputListener {
 
